@@ -114,3 +114,7 @@ input fields at the accessibility level, and pattern-scrubs secrets before
 writing. Everything it produces is plaintext on your own disk, and the
 capture folder is excluded from capture so it cannot observe itself. If
 you find a hole in any of this, please open an issue.
+
+## Acknowledgements
+
+Forked from [dragthelake/ambient-context](https://github.com/dragthelake/ambient-context).
