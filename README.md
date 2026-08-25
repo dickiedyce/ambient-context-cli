@@ -1,24 +1,19 @@
 # Ambient Context
 
-A macOS menu bar app that keeps a written record of what you work on, for
-your own LLM to read.
+A CLI tool that keeps a written record of what you work on, for your own LLM
+to read.
 
-<p align="center">
-  <img src="docs/ambient-context.gif" width="520" alt="Ambient Context settings window, with the ASCII eye open while recording" />
-</p>
-
-While the eye in your menu bar is open, Ambient Context reads the text of
-whichever window you have focused (via the macOS accessibility tree, every
-few seconds) and appends it to a plain markdown file: one file per day, in
-a folder you choose. Point Claude Code or any other agent at that folder
-and it can answer "what did I work on Tuesday?", build memory about your
-projects, or write your standup for you.
+While running, Ambient Context reads the text of whichever window you have
+focused (via the macOS accessibility tree, every few seconds) and appends it
+to a plain markdown file: one file per day, in a folder you choose. Point
+Claude Code or any other agent at that folder and it can answer "what did I
+work on Tuesday?", build memory about your projects, or write your standup
+for you.
 
 - **No screenshots, no video.** It reads text through the accessibility
   API, nothing else.
 - **Nothing leaves your machine.** No account, no server, no telemetry, no
-  bundled model. This build makes no network calls at all; the signed
-  release will add a single update check against GitHub.
+  bundled model. This build makes no network calls at all.
 - **Files you own.** Plain markdown in a folder you chose. Move them,
   grep them, delete them.
 - **Redaction before writing.** Password managers and private browsing
@@ -33,50 +28,71 @@ projects, or write your standup for you.
 
 Requires macOS 14+ on Apple Silicon.
 
-## Status
+## Install
 
-Early and unsigned. There is no notarised download yet (Apple Developer
-enrolment is in progress), so for now you build it yourself, which takes
-about two minutes:
-
-## Build and run
-
-You need [Node](https://nodejs.org), [Rust](https://rustup.rs) and Xcode
-Command Line Tools.
+You need [Rust](https://rustup.rs) and Xcode Command Line Tools.
 
 ```bash
 git clone https://github.com/dragthelake/ambient-context
-cd ambient-context
-npm install
-npm run tauri build
+cd ambient-context/cli
+cargo build --release
 ```
 
-The app lands in `src-tauri/target/release/bundle/macos/`. Drag
-`Ambient Context.app` to Applications and open it.
+The binary lands in `target/release/ambient-context`. Copy it somewhere on
+your `$PATH`:
 
-For development, `npm run tauri dev` runs it with hot reload.
+```bash
+cp target/release/ambient-context /usr/local/bin/
+```
+
+Build and install the accessibility helper:
+
+```bash
+cd src-ax
+swift build -c release
+cp .build/release/ambient-context-ax /usr/local/bin/
+```
+
+## Usage
+
+```bash
+# Start capturing (runs in the foreground)
+ambient-context start
+
+# Start and detach from the terminal
+ambient-context start & disown
+
+# Stop
+ambient-context stop
+
+# Check status
+ambient-context status
+
+# View today's capture file path
+ambient-context today
+
+# Take a one-off accessibility snapshot
+ambient-context snapshot
+
+# View logs
+ambient-context logs
+ambient-context logs -f    # follow
+```
 
 ## First run
 
-1. The settings window opens by itself. Grant Accessibility when asked:
-   this is the permission that lets the app read window text, and nothing
-   works without it.
+1. Grant Accessibility permission when asked: this is the permission that
+   lets the app read window text, and nothing works without it.
 2. Choose where to save. The default is `~/Ambient Context`, deliberately
    outside `~/Documents` so iCloud does not sync your record off the
-   machine.
-3. That's it. Recording starts once setup is complete and starts with the
-   app from then on. Click the eye in the menu bar to stop; stopping is
-   remembered until you start again.
-
-Open eye: recording. Closed eye: not. Right-click the icon for today's
-file, the folder and settings.
+   machine. Override with `--folder` or in `~/.config/ambient-context/config.toml`.
 
 ## What a day file looks like
 
 ```markdown
 ---
 date: 2026-08-25
-captured_by: Ambient Context 0.1.0
+captured_by: Ambient Context 0.2.0
 ---
 
 ## 09:41–10:05 · Chrome · Tauri tray documentation
@@ -95,18 +111,14 @@ and how to read it well.
 
 - Chromium and Electron apps (Chrome, Slack, VS Code, Obsidian, Figma...)
   only build their accessibility tree when asked, so the first seconds of
-  capture in those apps are thin and fill in on later passes. Chrome may
-  show a slightly glitchy window-resize animation while enabled; that is a
-  known cost of the mechanism.
+  capture in those apps are thin and fill in on later passes.
 - GPU-rendered terminals (Kitty, Alacritty) expose little or no text.
   Terminal.app and iTerm2 work.
-- Capture your findings: which apps come back rich, partial or empty is
-  exactly the feedback that helps (`docs/census.md` has the template).
 
 ## Tests
 
 ```bash
-cd src-tauri && cargo test
+cd cli && cargo test
 ```
 
 ## Privacy model, in one paragraph
