@@ -1,7 +1,7 @@
 # Ambient Context
 
-A CLI tool that keeps a written record of what you work on, for your own LLM
-to read.
+A macOS CLI daemon that keeps a written record of what you work on, for your
+own LLM to read.
 
 While running, Ambient Context reads the text of whichever window you have
 focused (via the macOS accessibility tree, every few seconds) and appends it
@@ -10,12 +10,12 @@ Claude Code or any other agent at that folder and it can answer "what did I
 work on Tuesday?", build memory about your projects, or write your standup
 for you.
 
-- **No screenshots, no video.** It reads text through the accessibility
-  API, nothing else.
+- **No screenshots, no video.** Reads text through the accessibility API,
+  nothing else.
 - **Nothing leaves your machine.** No account, no server, no telemetry, no
-  bundled model. This build makes no network calls at all.
-- **Files you own.** Plain markdown in a folder you chose. Move them,
-  grep them, delete them.
+  bundled model. No network calls.
+- **Files you own.** Plain markdown in a folder you chose. Move them, grep
+  them, delete them.
 - **Redaction before writing.** Password managers and private browsing
   windows are never captured. Password fields are skipped at the source,
   and credentials, API keys and card-shaped numbers are scrubbed before
@@ -33,15 +33,9 @@ Requires macOS 14+ on Apple Silicon.
 You need [Rust](https://rustup.rs) and Xcode Command Line Tools.
 
 ```bash
-git clone https://github.com/dragthelake/ambient-context
-cd ambient-context/cli
+git clone https://github.com/dickiedyce/ambient-context-cli
+cd ambient-context-cli/cli
 cargo build --release
-```
-
-The binary lands in `target/release/ambient-context`. Copy it somewhere on
-your `$PATH`:
-
-```bash
 cp target/release/ambient-context /usr/local/bin/
 ```
 
@@ -56,36 +50,26 @@ cp .build/release/ambient-context-ax /usr/local/bin/
 ## Usage
 
 ```bash
-# Start capturing (runs in the foreground)
-ambient-context start
+ambient-context start           # start capturing (foreground)
+ambient-context start & disown  # start and detach
 
-# Start and detach from the terminal
-ambient-context start & disown
+ambient-context stop            # stop
+ambient-context status          # check if running
 
-# Stop
-ambient-context stop
+ambient-context today           # print path to today's file
+ambient-context snapshot        # one-off accessibility snapshot
 
-# Check status
-ambient-context status
-
-# View today's capture file path
-ambient-context today
-
-# Take a one-off accessibility snapshot
-ambient-context snapshot
-
-# View logs
-ambient-context logs
-ambient-context logs -f    # follow
+ambient-context logs            # recent logs
+ambient-context logs -f         # follow logs
 ```
 
 ## First run
 
-1. Grant Accessibility permission when asked: this is the permission that
-   lets the app read window text, and nothing works without it.
-2. Choose where to save. The default is `~/Ambient Context`, deliberately
-   outside `~/Documents` so iCloud does not sync your record off the
-   machine. Override with `--folder` or in `~/.config/ambient-context/config.toml`.
+1. Grant Accessibility permission when prompted — this is the permission
+   that lets the tool read window text, and nothing works without it.
+2. The default capture folder is `~/Ambient Context`, outside `~/Documents`
+   so iCloud does not sync your records off the machine. Override with
+   `--folder` or in `~/.config/ambient-context/config.toml`.
 
 ## What a day file looks like
 
@@ -95,9 +79,9 @@ date: 2026-08-25
 captured_by: Ambient Context 0.2.0
 ---
 
-## 09:41–10:05 · Chrome · Tauri tray documentation
+## 09:41–10:05 · Chrome · API design notes
 
-url: https://v2.tauri.app/learn/system-tray/
+url: https://example.com/docs/api
 
 <text seen in that window, first time it appeared today>
 ```
@@ -107,7 +91,7 @@ no matter how often they are seen, so the file stays small enough to hand
 to an LLM whole. `AGENTS.md` in the capture folder documents the format
 and how to read it well.
 
-## Notes for testers
+## App compatibility
 
 - Chromium and Electron apps (Chrome, Slack, VS Code, Obsidian, Figma...)
   only build their accessibility tree when asked, so the first seconds of
@@ -121,9 +105,9 @@ and how to read it well.
 cd cli && cargo test
 ```
 
-## Privacy model, in one paragraph
+## Privacy
 
-The app reads only the focused window: never background windows, other
+The tool reads only the focused window: never background windows, other
 displays or minimised windows, and never while the screen is locked. It
 excludes password managers and private browsing entirely, skips secure
 input fields at the accessibility level, and pattern-scrubs secrets before
